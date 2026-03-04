@@ -1,27 +1,32 @@
 <?php
 require '../conexao.php';
+session_start();
+
+if (!isset($_SESSION['idTatuador'])) {
+    header("Location: ../login.php");
+    exit;
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
+    $idTatuador = $_SESSION['idTatuador'];
     $titulo = trim($_POST['titulo']);
-    $autor = trim($_POST['autor']);
-    $disponivel = isset($_POST['disponivel']) ? 1 : 0;
+    $descricao = trim($_POST['descricao']);
 
-    // Upload da imagem
     $imagem = null;
 
-    if (isset($_FILES['imagem']) && $_FILES['imagem']['error'] === 0) {
+    // Upload da imagem
+    if (isset($_FILES['imagemVideo']) && $_FILES['imagemVideo']['error'] === 0) {
 
         if (!is_dir('../Imagens')) {
             mkdir('../Imagens', 0777, true);
         }
 
-        $extensao = pathinfo($_FILES['imagem']['name'], PATHINFO_EXTENSION);
+        $extensao = pathinfo($_FILES['imagemVideo']['name'], PATHINFO_EXTENSION);
         $nomeArquivo = uniqid() . "." . $extensao;
-
         $caminho = "../Imagens/" . $nomeArquivo;
 
-        if (move_uploaded_file($_FILES['imagem']['tmp_name'], $caminho)) {
+        if (move_uploaded_file($_FILES['imagemVideo']['tmp_name'], $caminho)) {
             $imagem = $nomeArquivo;
         } else {
             echo "<script>alert('Erro ao salvar a imagem!');</script>";
@@ -29,20 +34,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        $sql = "INSERT INTO livros (titulo, autor, disponivel, imagem) 
-                VALUES (:titulo, :autor, :disponivel, :imagem)";
+
+        $sql = "INSERT INTO portfolio 
+                (idTatuador, titulo, descricao, imagemVideo) 
+                VALUES (:idTatuador, :titulo, :descricao, :imagemVideo)";
 
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
+            ':idTatuador' => $idTatuador,
             ':titulo' => $titulo,
-            ':autor' => $autor,
-            ':disponivel' => $disponivel,
-            ':imagem' => $imagem
+            ':descricao' => $descricao,
+            ':imagemVideo' => $imagem
         ]);
 
         echo "<script>
-                alert('Livro cadastrado com sucesso!');
-                window.location.href = '../painel.php';
+                alert('Tatuagem cadastrada com sucesso!');
+                window.location.href = 'listar.php';
               </script>";
         exit;
 
@@ -56,26 +63,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Cadastrar Livro</title>
+<title>Cadastrar Tatuagem</title>
 <link rel="stylesheet" href="../CSS/style.css">
 </head>
 <body>
 
 <div class="container">
-    <h1>Cadastrar Livro</h1>
+    <h1>Cadastrar Tatuagem</h1>
 
     <form method="POST" enctype="multipart/form-data">
-        <input type="text" name="titulo" placeholder="Título" required>
-        <input type="text" name="autor" placeholder="Autor" required>
 
-        <label>
-            <input type="checkbox" name="disponivel" checked>
-            Disponível
-        </label>
+        <input type="text" name="titulo" placeholder="Título da tatuagem" required>
 
-        <input type="file" name="imagem" accept="image/*">
+        <textarea name="descricao" placeholder="Descrição da tatuagem" required></textarea>
+
+        <input type="file" name="imagemVideo" accept="image/*,video/*">
 
         <button type="submit">Cadastrar</button>
+
     </form>
 </div>
 

@@ -1,5 +1,12 @@
 <?php
 require '../conexao.php';
+session_start();
+
+// Verifica login
+if (!isset($_SESSION['idTatuador'])) {
+    header("Location: ../login.php");
+    exit;
+}
 
 $id = $_GET['id'] ?? null;
 
@@ -8,13 +15,13 @@ if (!$id) {
     exit;
 }
 
-// BUSCA LIVRO
-$sql = "SELECT * FROM livros WHERE id = :id";
+// BUSCAR TATUAGEM
+$sql = "SELECT * FROM portfolio WHERE idPortfolio = :id";
 $stmt = $pdo->prepare($sql);
 $stmt->execute([':id' => $id]);
-$livro = $stmt->fetch(PDO::FETCH_ASSOC);
+$tatuagem = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$livro) {
+if (!$tatuagem) {
     header("Location: listar.php");
     exit;
 }
@@ -22,51 +29,50 @@ if (!$livro) {
 // ATUALIZAÇÃO
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    $titulo     = trim($_POST['titulo']);
-    $autor      = trim($_POST['autor']);
-    $disponivel = isset($_POST['disponivel']) ? 1 : 0;
-    $imagem     = $livro['imagem'];
+    $titulo = trim($_POST['titulo']);
+    $descricao = trim($_POST['descricao']);
+    $imagem = $tatuagem['imagemVideo'];
+
+    $pasta = "../Imagens/";
 
     // Upload nova imagem
-    if (!empty($_FILES['imagem']['name'])) {
-
-        $ext = strtolower(pathinfo($_FILES['imagem']['name'], PATHINFO_EXTENSION));
-        $nomeImagem = uniqid() . "." . $ext;
-        $pasta = "../Imagens/";
+    if (!empty($_FILES['imagemVideo']['name'])) {
 
         if (!is_dir($pasta)) {
             mkdir($pasta, 0777, true);
         }
 
-        if (move_uploaded_file($_FILES['imagem']['tmp_name'], $pasta . $nomeImagem)) {
+        $ext = strtolower(pathinfo($_FILES['imagemVideo']['name'], PATHINFO_EXTENSION));
+        $nomeArquivo = uniqid() . "." . $ext;
 
-            if (!empty($livro['imagem']) && file_exists($pasta . $livro['imagem'])) {
-                unlink($pasta . $livro['imagem']);
+        if (move_uploaded_file($_FILES['imagemVideo']['tmp_name'], $pasta . $nomeArquivo)) {
+
+            // Remove imagem antiga
+            if (!empty($tatuagem['imagemVideo']) && file_exists($pasta . $tatuagem['imagemVideo'])) {
+                unlink($pasta . $tatuagem['imagemVideo']);
             }
 
-            $imagem = $nomeImagem;
+            $imagem = $nomeArquivo;
         }
     }
 
-    $sql = "UPDATE livros SET 
+    $sql = "UPDATE portfolio SET 
                 titulo = :titulo,
-                autor = :autor,
-                disponivel = :disponivel,
-                imagem = :imagem
-            WHERE id = :id";
+                descricao = :descricao,
+                imagemVideo = :imagem
+            WHERE idPortfolio = :id";
 
     $stmt = $pdo->prepare($sql);
 
     if ($stmt->execute([
         ':titulo' => $titulo,
-        ':autor' => $autor,
-        ':disponivel' => $disponivel,
+        ':descricao' => $descricao,
         ':imagem' => $imagem,
         ':id' => $id
     ])) {
 
         echo "<script>
-                alert('Livro atualizado com sucesso!');
+                alert('Tatuagem atualizada com sucesso!');
                 window.location='listar.php';
               </script>";
         exit;
@@ -78,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Editar Livro</title>
+<title>Editar Tatuagem</title>
 <link rel="stylesheet" href="../CSS/style.css">
 </head>
 
@@ -86,36 +92,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <div class="card-editar">
 
-    <h1>Editar Livro</h1>
+    <h1>Editar Tatuagem</h1>
 
     <form method="POST" enctype="multipart/form-data">
 
         <div class="input-group">
             <label>Título</label>
-            <input type="text" name="titulo" required value="<?= $livro['titulo'] ?>">
+            <input type="text" name="titulo" required value="<?= htmlspecialchars($tatuagem['titulo']) ?>">
         </div>
 
         <div class="input-group">
-            <label>Autor</label>
-            <input type="text" name="autor" required value="<?= $livro['autor'] ?>">
+            <label>Descrição</label>
+            <textarea name="descricao" required><?= htmlspecialchars($tatuagem['descricao']) ?></textarea>
         </div>
 
         <div class="input-group">
-            <label>
-                <input type="checkbox" name="disponivel" <?= $livro['disponivel'] ? 'checked' : '' ?>>
-                Disponível
-            </label>
+            <label>Imagem ou Vídeo</label>
+            <input type="file" name="imagemVideo" accept="image/*,video/*">
+            <small>Deixe vazio para manter o arquivo atual</small>
         </div>
 
-        <div class="input-group">
-            <label>Imagem</label>
-            <input type="file" name="imagem">
-            <small>Deixe vazio para manter a imagem atual</small>
-        </div>
-
-        <?php if ($livro['imagem']) { ?>
+        <?php if (!empty($tatuagem['imagemVideo'])) { ?>
             <div style="text-align:center;margin-bottom:15px;">
-                <img src="../Imagens/<?= $livro['imagem'] ?>" style="max-width:140px;border-radius:8px;">
+                <img src="../Imagens/<?= $tatuagem['imagemVideo'] ?>" style="max-width:140px;border-radius:8px;">
             </div>
         <?php } ?>
 

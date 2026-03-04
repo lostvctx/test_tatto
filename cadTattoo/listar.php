@@ -1,22 +1,31 @@
 <?php
-// Importa o arquivo que faz a conexão com o banco de dados
 require '../conexao.php';
+session_start();
 
-// Cria um comando SQL para buscar todos os livros na tabela "livros"
-$sql = "SELECT * FROM livros";
+// Verifica login
+if (!isset($_SESSION['idTatuador'])) {
+    header("Location: ../login.php");
+    exit;
+}
 
-// Executa o comando SQL
-$stmt = $pdo->query($sql);
+$idTatuador = $_SESSION['idTatuador'];
 
-// Pega todos os resultados e transforma em um array
-$livros = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Busca apenas tatuagens do tatuador logado
+$sql = "SELECT * FROM portfolio 
+        WHERE idTatuador = :idTatuador
+        ORDER BY dataPublicacao DESC";
+
+$stmt = $pdo->prepare($sql);
+$stmt->execute([':idTatuador' => $idTatuador]);
+
+$tatuagens = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Lista de Livros</title>
+<title>Minhas Tatuagens</title>
 <link rel="stylesheet" href="../CSS/style.css">
 
 <style>
@@ -34,9 +43,9 @@ $livros = $stmt->fetchAll(PDO::FETCH_ASSOC);
     background-color: #333;
 }
 
-img.capa {
-    width: 60px;
-    border-radius: 5px;
+img.preview {
+    width: 80px;
+    border-radius: 6px;
 }
 </style>
 
@@ -44,10 +53,9 @@ img.capa {
 <body>
 
 <div class="lista-container">
-    <h1>Lista de Livros</h1>
+    <h1>Minhas Tatuagens</h1>
 
-    <!-- BOTÃO VOLTAR -->
-    <a class="btn-voltar" href="../painel.php">Voltar para o Painel</a>
+    <a class="btn-voltar" href="../painel.php">Voltar ao Painel</a>
 
     <table class="tabela-usuarios">
         <thead>
@@ -55,38 +63,47 @@ img.capa {
                 <th>ID</th>
                 <th>Imagem</th>
                 <th>Título</th>
-                <th>Autor</th>
-                <th>Status</th>
+                <th>Descrição</th>
+                <th>Data</th>
                 <th>Ações</th>
             </tr>
         </thead>
 
         <tbody>
-            <?php foreach ($livros as $l): ?>
-            <tr>
-                <td><?= $l['id'] ?></td>
+            <?php if (count($tatuagens) > 0): ?>
+                <?php foreach ($tatuagens as $t): ?>
+                <tr>
+                    <td><?= $t['idPortfolio'] ?></td>
 
-                <td>
-                    <?php if($l['imagem']): ?>
-                        <img src="../imagens/<?= $l['imagem'] ?>" class="capa">
-                    <?php else: ?>
-                        Sem imagem
-                    <?php endif; ?>
-                </td>
+                    <td>
+                        <?php if (!empty($t['imagemVideo'])): ?>
+                            <img src="../Imagens/<?= $t['imagemVideo'] ?>" class="preview">
+                        <?php else: ?>
+                            Sem arquivo
+                        <?php endif; ?>
+                    </td>
 
-                <td><?= $l['titulo'] ?></td>
-                <td><?= $l['autor'] ?></td>
+                    <td><?= htmlspecialchars($t['titulo']) ?></td>
 
-                <td>
-                    <?= $l['disponivel'] ? 'Disponível' : 'Alugado' ?>
-                </td>
+                    <td><?= htmlspecialchars($t['descricao']) ?></td>
 
-                <td>
-                    <a class="btn-editar" href="editar.php?id=<?= $l['id'] ?>">Editar</a>
-                    <a class="btn-excluir" href="excluir.php?id=<?= $l['id'] ?>" onclick="return confirm('Deseja realmente excluir este livro?')">Excluir</a>
-                </td>
-            </tr>
-            <?php endforeach; ?>
+                    <td><?= date('d/m/Y H:i', strtotime($t['dataPublicacao'])) ?></td>
+
+                    <td>
+                        <a class="btn-editar" href="editar.php?id=<?= $t['idPortfolio'] ?>">Editar</a>
+                        <a class="btn-excluir" 
+                           href="excluir.php?id=<?= $t['idPortfolio'] ?>" 
+                           onclick="return confirm('Deseja realmente excluir esta tatuagem?')">
+                           Excluir
+                        </a>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <tr>
+                    <td colspan="6">Nenhuma tatuagem cadastrada.</td>
+                </tr>
+            <?php endif; ?>
         </tbody>
     </table>
 </div>
