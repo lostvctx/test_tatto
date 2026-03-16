@@ -270,7 +270,10 @@ $referencias = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         </div>
 
                         <div class="form-notice">
-                            <p>✅ Ao enviar, você concorda que as informações são verdadeiras e o agendamento está sujeito à confirmação.</p>
+                            <label class="checkbox-confirm">
+                                <input type="checkbox" name="confirmacao" required>
+                                Eu confirmo que as informações são verdadeiras e que o agendamento está sujeito à confirmação do tatuador.
+                            </label>
                         </div>
 
                         <button type="submit" class="btn-submit">Solicitar Agendamento</button>
@@ -279,4 +282,5 @@ $referencias = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
         </div>
     </div>
+    <script src="../assets/js/script.js"></script>
     <a href="../logout.php">Sair</a>

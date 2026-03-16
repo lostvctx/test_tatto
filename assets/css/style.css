@@ -817,6 +817,19 @@ body {
 
 }
 
+.checkbox-confirm{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:14px;
+    margin-top:15px;
+}
+
+.checkbox-confirm input{
+    width:18px;
+    height:18px;
+    cursor:pointer;
+}
 
 .client-header {
 
