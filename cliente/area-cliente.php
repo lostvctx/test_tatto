@@ -25,16 +25,15 @@ $idCliente = $cliente['idCliente'];
 $stmt = $pdo->prepare("
     SELECT * FROM agendamento
     WHERE idCliente = ?
-    ORDER BY criadoEm DESC
+    ORDER BY criado_em DESC
 ");
-$stmt->execute([$idCliente]);
+$stmt->execute([$usuario_id]);
 $agendamentos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
 // Buscar referências
 $stmt = $pdo->prepare("
     SELECT * FROM referencia_salva
     WHERE idCliente = ?
-    ORDER BY dataSalvo DESC
+    ORDER BY criado_em DESC
 ");
 $stmt->execute([$idCliente]);
 $referencias = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -88,13 +87,10 @@ $referencias = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <?php
 
                                         $status_labels = [
-
                                             'pendente' => '⏳ Pendente',
-
                                             'confirmado' => '✅ Confirmado',
-
-                                            'cancelado' => '❌ Cancelado'
-
+                                            'cancelado' => '❌ Cancelado',
+                                            'concluido' => '✔ Concluído'
                                         ];
 
                                         echo $status_labels[$agendamento['status']];

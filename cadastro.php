@@ -33,31 +33,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $senhaHash = password_hash($senha, PASSWORD_DEFAULT);
 
             // 🔹 Cria usuário na tabela usuario
+            $nivel = $_POST['nivel'];
+
             $stmt = $pdo->prepare("
-                INSERT INTO usuario (nome, email, login, senha, nivel)
-                VALUES (?, ?, ?, ?, 'CLIENTE')
+             INSERT INTO usuario (nome, email, senha, nivel)
+             VALUES (?, ?, ?, ?)
             ");
 
             $stmt->execute([
                 $nome,
-                $email,       // email
-                $email,       // login (vamos usar email como login)
-                $senhaHash
+                $email,
+                $senhaHash,
+                $nivel
             ]);
 
             $idUsuario = $pdo->lastInsertId();
 
             // 🔹 Cria registro na tabela cliente
-            $stmt = $pdo->prepare("
-                INSERT INTO cliente (idUsuario)
-                VALUES (?)
-            ");
-            $stmt->execute([$idUsuario]);
+            if ($nivel === 'CLIENTE') {
+
+                $stmt = $pdo->prepare("
+        INSERT INTO cliente (idUsuario)
+        VALUES (?)
+    ");
+                $stmt->execute([$idUsuario]);
+            } else if ($nivel === 'TATUADOR') {
+
+                $stmt = $pdo->prepare("
+        INSERT INTO tatuador (idUsuario)
+        VALUES (?)
+    ");
+                $stmt->execute([$idUsuario]);
+            }
 
             // 🔹 Cria sessão
             $_SESSION['user_id'] = $idUsuario;
             $_SESSION['user_nome'] = $nome;
-            $_SESSION['user_nivel'] = 'CLIENTE';
+           $_SESSION['user_nivel'] = $nivel;
 
             header('Location: cliente/area-cliente.php');
             exit;
@@ -101,6 +113,14 @@ require_once 'includes/header.php';
             <div class="form-group">
                 <label for="confirma_senha">Confirmar senha</label>
                 <input type="password" id="confirma_senha" name="confirma_senha" required class="form-input">
+            </div>
+
+            <div class="form-group">
+                <label>Tipo de conta</label>
+                <select name="nivel" class="form-input" required>
+                    <option value="CLIENTE">Cliente</option>
+                    <option value="TATUADOR">Tatuador</option>
+                </select>
             </div>
 
             <button type="submit" class="btn-submit">Criar conta</button>

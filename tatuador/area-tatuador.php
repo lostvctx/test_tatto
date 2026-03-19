@@ -1,8 +1,8 @@
 <?php
 session_start();
 
-require_once '../config.php';
-require_once '../funcoes.php';
+require_once '../includes/config.php';
+require_once '../includes/funcoes.php';
 
 verificarLogin();
 verificarNivel('TATUADOR');
@@ -28,7 +28,7 @@ $stmt = $pdo->prepare("
     JOIN cliente c ON a.idCliente = c.idCliente
     JOIN usuario u ON c.idUsuario = u.idUsuario
     WHERE a.idTatuador = ?
-    ORDER BY a.dataHora ASC
+    ORDER BY a.data ASC
 ");
 
 $stmt->execute([$idTatuador]);
